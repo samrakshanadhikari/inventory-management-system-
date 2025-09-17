@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  role      Role       @default(STAFF)
+  checkouts Checkout[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Vendor {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  contactEmail String?
+  phone        String?
+  assets       Asset[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Asset {
+  id        String      @id @default(cuid())
+  tag       String      @unique
+  name      String
+  status    AssetStatus @default(AVAILABLE)
+  vendorId  String?
+  vendor    Vendor?     @relation(fields: [vendorId], references: [id])
+  checkouts Checkout[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([status])
+}
+
+model Checkout {
+  id           String    @id @default(cuid())
+  userId       String
+  assetId      String
+  checkoutDate DateTime  @default(now())
+  dueDate      DateTime?
+  returnDate   DateTime?
+
+  user  User  @relation(fields: [userId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id])
+
+  @@index([assetId, returnDate])
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum AssetStatus {
+  AVAILABLE
+  CHECKED_OUT
+  RETIRED
+}
